@@ -35,7 +35,7 @@ let animateCnt = 0;
 let animate = 0;
 let animationDelta = 50;
 let initialDis = 0;
-let cartAnimationFactor = 0.5;
+let cartAnimationFactor = 0.3;
 
 let itemsToMoveL = -1;
 let itemsToMoveR = -1;
@@ -53,6 +53,11 @@ function preload() {
   allItems[0] = loadImage('earth.png');
   allItems[1] = loadImage('football.png');
   allItems[2] = loadImage('panda.png');
+
+  // EndCard = loadImage('PlayableEndCard.png');
+  appIcon = loadImage('AppIcon.png');
+  // appIconCircle = loadImage('AppIcon_Circle.png');
+  buttonImg = loadImage('MS3D_button.png');
   
   
 }
@@ -131,7 +136,7 @@ function setupBg() {
   
   // console.log(cart.width + " " + cart.height);
   
-  image(cart, 0, height - cart.height*1.2, width, cart.height)
+  image(cart, 0, height - cart.height, width, cart.height)
 }
 
 function renderItems() {
@@ -155,7 +160,7 @@ function findCartCoord() {
   for(i = 0; i < cartImages.length; i++) {
     
     let xShift = cartBorderX0L + i*slotSzL + i*cartBorderX1L + slotSzL/2 - cartImgSz/2;
-    let yShift = height - cart.height*1.2 + cart.height/2 - cartImgSz/2;
+    let yShift = height - cart.height + cart.height/2 - cartImgSz/2;
     cartCoord[i] = [xShift, yShift];
     // if(!animate)
     //   cartImageCoord[i] = cartCoord[i];
@@ -182,7 +187,7 @@ function setup() {
   for(i = 0; i < boardItemCnt.length; i++) {
     for(j = 0; j < boardItemCnt[i]; j++) {
       xc = generateNumber(2*boardImgSz, width-2*boardImgSz);
-      yc = generateNumber(height*topBarRatio+2*boardImgSz, height-2*boardImgSz-cart.height*1.2);
+      yc = generateNumber(height*topBarRatio+2*boardImgSz, height-2*boardImgSz-cart.height);
       // console.log(xc + " " + yc);
       // allBoardItems[cnt] = allItems[i];
       allBoardItemsCoord[cnt] = [xc, yc, i, boardImgSz];
@@ -253,6 +258,31 @@ function draw() {
 
     fill(0, 0, 0, 150);
     rect(0, 0, width, height);
+
+    // appIcon.resize(width/3, width/3)
+    imageWd = min(width/3, 200);
+    image(appIcon, width/2 - imageWd/2, height*0.15, imageWd, imageWd);
+
+    textSize(40);
+    strokeWeight(2);
+    stroke(224, 176, 255);
+    fill(255, 255, 255);
+    playMoreText = 'Explore More Levels!';
+    textAlign(CENTER);
+    // text(playMoreText);
+    text(playMoreText, 0, height*0.15+imageWd+height/15, width, 100);
+
+    // buttonImg.resize(min(width/2, 300), 0);
+    btnWd = min(width/2, 300);;
+    playButton = new Button(width/2-btnWd/2, height*0.15+imageWd+height/4, buttonImg, btnWd, 20, buttonImg.height/buttonImg.width);
+    playButton.display();
+    // image(buttonImg, width/2-buttonImg.width/2, height*0.15+appIcon.height+250, buttonImg.width, buttonImg.height);
+    
+    
+
+
+    // EndCard.resize();
+    // image(EndCard, 0, 0, width, height);
 
     // return;
   }
@@ -435,6 +465,7 @@ function mouseReleased() {
   if(animateCnt > 0)
     return;
   if(showEndFrame) {
+    playButton.mouseReleased();
     // Check end frame button conditions and open playstore is button is clicked
     return;
   }
@@ -521,6 +552,80 @@ var generateNumber = function(min, max) {
 
 
 
+
+class Button {
+  constructor(inX, inY, inImg, szX, delta, aspectRatio) {
+    this.x = inX;
+    this.y = inY;
+    this.img = inImg;
+    this.szX = szX;
+    this.delta = delta;
+    this.aspectRatio = aspectRatio;
+  }
+  
+  display() {
+    // image(allItems[0], 0, 0, allItems[0].width, allItems[0].height);
+    let decSz = false;
+    stroke(0);
+    // tint the image on mouse hover
+    if (this.over()) {
+      tint(240, 255);
+      if(mouseIsPressed == true) {
+        decSz = true;
+        // image(this.img, this.x, this.y, this.szX-40, this.szY-40);
+      }
+    }
+
+    if(decSz == true) {
+      // console.log("inside true");
+      tint(220, 255);
+      // image(buttonImg, 0, 0, buttonImg.width, buttonImg.height);
+      // image(allItems[0], 0, 0, allItems[0].width, allItems[0].height);
+      image(this.img, this.x+this.delta/2, this.y+this.delta/2, this.szX-this.delta, this.aspectRatio*(this.szX-this.delta));
+    } else {
+      // console.log("inside false");
+      // image(buttonImg, 0, 0, buttonImg.width, buttonImg.height);
+      // image(allItems[0], 0, 0, allItems[0].width, allItems[0].height);
+      image(this.img, this.x, this.y, this.szX, this.aspectRatio*this.szX);
+    }
+    noTint();
+
+
+    // if(this.over()) {
+    //   tint(220, 255);
+    //   image(this.img, this.x, this.y, this.szX, this.szY);
+    //   noTint();
+    // } else {
+    //   image(this.img, this.x, this.y, this.szX, this.szY);
+    // }
+  }
+  
+  // over automatically matches the width & height of the image read from the file
+  // see this.img.width and this.img.height below
+  over() {
+    if (mouseX > this.x && mouseX < this.x + this.szX && mouseY > this.y && mouseY < this.y + this.aspectRatio*this.szX) {
+      console.log("over button");
+      return true;
+    } else {
+      return false;
+    }
+  }
+  
+  mousePressed() {
+    image(this.img, this.x, this.y, this.szX-20, this.szY-20);
+  }
+  
+  mouseReleased() {
+    if(this.over()) {
+      this.openLink();
+    }
+  }
+
+  openLink() {
+    window.open('https://play.google.com/store/apps/details?id=com.gameberrylabs.match3d&hl=en_IN&gl=US&pli=1');
+  } 
+  
+}
 
 // function setup() {
 //   // createCanvas(400, 400);
