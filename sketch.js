@@ -2,7 +2,7 @@ let topBarRatio = 0.11;
 let objSz = 40;
 let objY = 10;
 let objCnt = 2;
-let ObjTargetCnt = [3, 3]; // Target count to collect for each object
+let ObjTargetCnt = [9, 9]; // Target count to collect for each object
 let easeCnt = [0, 0];
 let easeLimit = 10;
 let objHolderHeightRatio = 0.7;
@@ -23,7 +23,7 @@ let cartImgSz = 40;
 
 let allItems = [];
 
-let boardItemCnt = [3, 3, 3];
+let boardItemCnt = [9, 9, 9];
 let boardItemTotalCnt = 3;
 let allBoardItemsCoord = [];
 let boardImgSz = 80;
@@ -46,6 +46,19 @@ let showEndFrame = false;
 
 let currentMid = -1;
 
+
+let buttonImg;
+let handImg;
+
+let showHand = true;
+let showHandLmt = 0.8;
+let showHandDelta = -0.005;
+let showHandFactor = 0.995;
+let handX = -1;
+let handY = -1;
+
+let previousSetHandId = -1;
+
 function preload() {
   cart = loadImage('Cart.png');
   // objHolder = loadImage('ObjectiveCard_FG.png');
@@ -59,7 +72,29 @@ function preload() {
   // appIconCircle = loadImage('AppIcon_Circle.png');
   buttonImg = loadImage('MS3D_button.png');
   
+  handImg = loadImage('hand.png');
   
+}
+
+function setHand() {
+  showHand = true;
+  showHandDelta = -0.005;
+  showHandFactor = 0.995;
+  var found = false;
+  for(i = 0; i < ObjTargetCnt.length; i++) {
+    if(found == true)
+      break;
+    if(ObjTargetCnt[i] > 0) {
+      for(j = 0; j < allBoardItemsCoord.length; j++) {
+        if(allBoardItemsCoord[j][2] == i) {
+          handX = allBoardItemsCoord[j][0];
+          handY = allBoardItemsCoord[j][1];
+          found = true;
+          break;
+        }
+      }
+    }
+  }
 }
 
 function setupBg() {
@@ -186,8 +221,8 @@ function setup() {
   let cnt = 0;
   for(i = 0; i < boardItemCnt.length; i++) {
     for(j = 0; j < boardItemCnt[i]; j++) {
-      xc = generateNumber(2*boardImgSz, width-2*boardImgSz);
-      yc = generateNumber(height*topBarRatio+2*boardImgSz, height-2*boardImgSz-cart.height);
+      xc = generateNumber(boardImgSz/5, width-boardImgSz);
+      yc = generateNumber(height*topBarRatio+boardImgSz/5, height-boardImgSz-cart.height);
       // console.log(xc + " " + yc);
       // allBoardItems[cnt] = allItems[i];
       allBoardItemsCoord[cnt] = [xc, yc, i, boardImgSz];
@@ -198,6 +233,7 @@ function setup() {
   }
   renderItems();
   renderCart();
+  setHand();
 }
 
 function draw() {
@@ -208,6 +244,15 @@ function draw() {
   findCartCoord();
   renderItems();
   renderCart();
+  if(showHand) {
+    // console.log(showHandFactor + " showHandFactor");
+    image(handImg, handX+boardImgSz/2, handY+boardImgSz/2, boardImgSz*showHandFactor, boardImgSz*showHandFactor);
+    if(showHandFactor <= showHandLmt || showHandFactor == 1) {
+      showHandDelta *= -1;
+    }
+    showHandFactor += showHandDelta;
+
+  }
   if(animateCnt > 0) {
     if((animateCnt&(1)) > 0)
       moveTo(currentSelected, currentCart);
@@ -226,8 +271,8 @@ function draw() {
     currentSelected = -1; 
     cartImageCoord = cartCoord.slice();
     cartImages = cartImagesCopy.slice();
-    console.log(cartImageCoord);
-    console.log(cartImages);
+    // console.log(cartImageCoord);
+    // console.log(cartImages);
 
     matchItems();
     // moveItemsLeft();
@@ -235,7 +280,7 @@ function draw() {
     // TODO: Move this to after items have been matched and moved.
     if((animateCnt&(1<<2)) == 0 && (animateCnt&(1<<3)) == 0) {
       if(isCartFull()) {
-        console.log("Cart full");
+        // console.log("Cart full");
         showEndFrame = true;
       }
     }
@@ -249,7 +294,7 @@ function draw() {
     animate = 0;
   }
   if(showEndFrame && animateCnt == 0) {
-    console.log("drawing end frame");
+    // console.log("drawing end frame");
     // clear();
     var width = (window.innerWidth > 0) ? window.innerWidth : screen.width;
     var height = (window.innerHeight > 0) ? window.innerHeight : screen.height;
@@ -274,7 +319,7 @@ function draw() {
 
     // buttonImg.resize(min(width/2, 300), 0);
     btnWd = min(width/2, 300);;
-    playButton = new Button(width/2-btnWd/2, height*0.15+imageWd+height/4, buttonImg, btnWd, 20, buttonImg.height/buttonImg.width);
+    playButton = new Button(width/2-btnWd/2, height*0.15+imageWd+height/4, buttonImg, btnWd, 10, buttonImg.height/buttonImg.width);
     playButton.display();
     // image(buttonImg, width/2-buttonImg.width/2, height*0.15+appIcon.height+250, buttonImg.width, buttonImg.height);
     
@@ -308,7 +353,7 @@ function matchItems() {
 }
 
 function playMatchAnimation() {
-  console.log("playing match animation");
+  // console.log("playing match animation");
   newXL = cartImageCoord[currentMid-1][0]+animationDelta*cartAnimationFactor;
   newXR = cartImageCoord[currentMid+1][0]-animationDelta*cartAnimationFactor;
   newY = cartCoord[currentMid][1];
@@ -348,7 +393,7 @@ function playMatchAnimation() {
 }
 
 function moveItemsLeft() {
-  console.log("Animating Cart Left");
+  // console.log("Animating Cart Left");
   for(i = itemsToMoveL; i <= itemsToMoveR; i++) {
     moveItemLeft(i);
   }
@@ -356,7 +401,7 @@ function moveItemsLeft() {
 
 function moveItemLeft(cartId) {
   newX = cartImageCoord[cartId][0]-animationDelta*cartAnimationFactor;
-  console.log(newX);
+  // console.log(newX);
   if(newX <= cartCoord[cartId-3][0]) {
     newX = cartCoord[cartId-3][0];
     moveItemsToLeft--;
@@ -367,13 +412,13 @@ function moveItemLeft(cartId) {
     animateCnt ^= (1<<3);
     cartImageCoord = cartCoord.slice();
     cartImages = cartImagesCopy.slice();
-    console.log(cartImageCoord);
-    console.log(cartImages);
+    // console.log(cartImageCoord);
+    // console.log(cartImages);
   }
 }
 
 function moveTo(objectIndex, cartIndex) {
-  console.log("Animating movement");
+  // console.log("Animating movement");
   xStart = allBoardItemsCoord[objectIndex][0];
   yStart = allBoardItemsCoord[objectIndex][1];
   imgId = allBoardItemsCoord[objectIndex][2];
@@ -433,7 +478,7 @@ function isCartFull() {
 }
 
 function moveItemsInCart() {
-  console.log("Animating Cart");
+  // console.log("Animating Cart");
   for(i = itemsToMoveR; i >= itemsToMoveL; i--) {
     moveCartItem(i);
   }
@@ -441,7 +486,7 @@ function moveItemsInCart() {
 
 function moveCartItem(cartId) {
   newX = cartImageCoord[cartId][0]+animationDelta*cartAnimationFactor;
-  console.log(newX);
+  // console.log(newX);
   if(newX >= cartCoord[cartId+1][0]) {
     newX = cartCoord[cartId+1][0];
     moveItemsToRight--;
@@ -469,16 +514,24 @@ function mouseReleased() {
     // Check end frame button conditions and open playstore is button is clicked
     return;
   }
+  // if(showHand == true)
+  //   showHand = false;
   for(i = 0; i < allBoardItemsCoord.length; i++) {
     xl = allBoardItemsCoord[i][0];
     yt = allBoardItemsCoord[i][1];
-    xr = xl+boardImgSz;
-    yb = yt+boardImgSz;
+    xr = xl+allBoardItemsCoord[i][3];
+    yb = yt+allBoardItemsCoord[i][3];
     
     // console.log(xl + " " + xr + " " + yt + " " + yb);
     
     if(mouseX >= xl && mouseX <= xr && mouseY >= yt && mouseY <= yb) {
       currentSelected = i;
+      showHand = false;
+      if(previousSetHandId != -1) {
+        clearInterval(previousSetHandId);
+        previousSetHandId = -1;
+      }
+      previousSetHandId = setInterval(setHand, 4000);
       animate = 1;
       addToCart();
       // initialCoord = [allBoardItemsCoord[i][0], allBoardItemsCoord[i][1]];
@@ -508,9 +561,9 @@ function addToCart() {
   }
   cartImagesCopy = cartImages.slice();
   for(i = cartImages.length-1; i >= 0; i--) {
-    console.log(i);
+    // console.log(i);
     if(cartImages[i] == allBoardItemsCoord[currentSelected][2]) {
-      console.log(cartImages[i] + " found another");
+      // console.log(cartImages[i] + " found another");
       // imgId = cartImages[i];
       cartId = i;
       break;
@@ -520,15 +573,15 @@ function addToCart() {
   if(cartId == 0) {
     cartId = cartItemCnt;
   }
-  console.log(cartId + " " + cartItemCnt + " " + imgId);
+  // console.log(cartId + " " + cartItemCnt + " " + imgId);
   currentCart = cartId;
   if(cartId == cartItemCnt) {
-    console.log("Dont move anything");
+    // console.log("Dont move anything");
     currentCart = cartId;
     cartImagesCopy[currentCart] = imgId;
     // cartImages[cartItemCnt] = allBoardItemsCoord[currentSelected][2];
   } else {
-    console.log("move something");
+    // console.log("move something");
     itemsToMoveL = cartId;
     itemsToMoveR = cartItemCnt-1;
     moveItemsToRight = itemsToMoveR-itemsToMoveL+1;
@@ -604,7 +657,7 @@ class Button {
   // see this.img.width and this.img.height below
   over() {
     if (mouseX > this.x && mouseX < this.x + this.szX && mouseY > this.y && mouseY < this.y + this.aspectRatio*this.szX) {
-      console.log("over button");
+      // console.log("over button");
       return true;
     } else {
       return false;
